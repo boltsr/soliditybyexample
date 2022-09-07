@@ -24,7 +24,6 @@
    - Owner can approve and revoke approval of pending transcations.
    - Any owner can execute a transcation after enough owners has approved it.
    - View functions to shows the special transactions using txIndex.
-   - Need event to logs the transaction Infos such like Deposit, SubmitTransaction, ConfirmTransaction, RevokeConfirmation, ExecuteTransaction
 
 3. Merkle Tree
 

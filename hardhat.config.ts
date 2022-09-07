@@ -1,28 +1,25 @@
-require("@nomicfoundation/hardhat-toolbox");
+import { HardhatUserConfig } from "hardhat/config";
 
-/** @type import('hardhat/config').HardhatUserConfig */
-module.exports = {
-  defaultNetwork: "rinkeby",
-  gasReporter: {
-    showTimeSpent: true,
-    currency: "USD",
-  },
+import "@nomiclabs/hardhat-etherscan";
+import "@nomiclabs/hardhat-waffle";
+import "hardhat-deploy";
+import "hardhat-typechain";
+
+const config: HardhatUserConfig = {
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {},
     localhost: {
       chainId: 31337,
       url: "http://127.0.0.1:8545",
       timeout: 10000000,
-      accounts: process.env.PRIVATE_KEY ? [""] : undefined,
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/70c4cf77c9054fd3a3196659f7dfe4f7`,
-      accounts: [""],
       timeout: 10000000,
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
-      accounts: process.env.PRIVATE_KEY ? [""] : undefined,
       timeout: 10000000,
     },
   },
@@ -40,3 +37,5 @@ module.exports = {
     ],
   },
 };
+
+export default config;
