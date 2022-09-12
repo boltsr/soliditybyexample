@@ -21,7 +21,7 @@
    - Need to store the transaction data including "to" address, "amount", "data", "executed", "numConfirmations"
    - Need to store information related confirmation if the special transaction is confirmed by special owner.
    - Owner can Submit transaction to save the transaction info.
-   - Owner can approve and revoke approval of pending transcations.
+   - Owner can approve and revoke approval of pending transactions.
    - Any owner can execute a transcation after enough owners has approved it.
    - View functions to shows the special transactions using txIndex.
 
@@ -41,7 +41,7 @@
 
    Spec:
 
-   - implemen basic test contract to be deployed.
+   - implement basic test contract to be deployed.
    - implement contract that returns the address of the newly deployed contract using create2 without assembly.
      • deploy function that deploy the contract using salt value.
    - implement contract that returns the address of deployed contract using create2 with assembly code.
@@ -56,7 +56,7 @@
 
    Spec:
 
-   - implement clone funciton using assembly code to deploy the same contract.
+   - implement clone function using assembly code to deploy the same contract.
 
 6. Implement upgradable proxy contract
 
@@ -97,7 +97,7 @@
    Alice deploys the contract, funding it with some Ether.
    Alice authorizes a payment by signing a message (off chain) and sends the signature to Bob.
    Bob claims his payment by presenting the signed message to the smart contract.
-   If Bob does not claim his payment, Alice get her Ether back after the contract expires
+   If Bob does not claim his payment, Alice get her Ether back after the contract expires(1 Day)
 
    Spec:
 

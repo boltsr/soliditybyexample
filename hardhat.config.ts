@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "hardhat-deploy";
 import "hardhat-typechain";
+import "solidity-coverage";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",

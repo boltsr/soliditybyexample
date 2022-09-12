@@ -25,7 +25,6 @@ describe("Etherwallet", () => {
   });
 
   it("Withdraw", async () => {
-    console.log(bob);
     await owner.sendTransaction({
       to: etherWallet.address,
       value: depositAmount, // 1 ether

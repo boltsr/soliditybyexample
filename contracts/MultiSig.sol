@@ -1,54 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.2;
 
-contract MultiSig {
-    address[] public owners;
-    mapping(address => bool) public isOwner;
-    uint256 public numConfirmationsRequired;
+/// @title Multi-Sig Wallet
+/// @notice Multi-Sig wallet to make transactions after enough owners has approved it.
+/// @dev Only owner can withdraw the fund.
 
+contract MultiSig {
+    /// @notice Owner address array to participate in transaction confirmation.
+    address[] public owners;
+
+    /// @notice Indicate if the address has got owner permission.
+    mapping(address => bool) public isOwner;
+
+    /// @notice target confirmation number to execute the transaction.
+    uint256 public targetConfirm;
+
+    /// @dev struct of transaction information
     struct Transaction {
         address to;
         uint256 value;
+        uint256 confirms;
         bytes data;
         bool executed;
-        uint256 numConfirmations;
     }
 
-    // mapping from tx index => owner => bool
-    mapping(uint256 => mapping(address => bool)) public isConfirmed;
+    /// @dev mapping to prove if the special tx is approved
+    mapping(uint256 => mapping(address => bool)) public isApproved;
 
-    Transaction[] public transactions;
+    /// @notice transaction array that is already submitted.
+    Transaction[] public txInfo;
 
-    modifier onlyOwner() {
-        require(isOwner[msg.sender], "not owner");
-        _;
-    }
-
-    modifier txExists(uint256 _txIndex) {
-        require(_txIndex < transactions.length, "tx does not exist");
-        _;
-    }
-
-    modifier notExecuted(uint256 _txIndex) {
-        require(!transactions[_txIndex].executed, "tx already executed");
-        _;
-    }
-
-    modifier notConfirmed(uint256 _txIndex) {
-        require(!isConfirmed[_txIndex][msg.sender], "tx already confirmed");
-        _;
-    }
-
-    constructor(address[] memory _owners, uint256 _numConfirmationsRequired) {
-        require(_owners.length > 0, "owners required");
+    constructor(address[] memory _approvers, uint256 _targetConfirm) {
+        require(_approvers.length > 0, "owners required");
         require(
-            _numConfirmationsRequired > 0 &&
-                _numConfirmationsRequired <= _owners.length,
+            _targetConfirm > 0 && _targetConfirm <= _approvers.length,
             "invalid number of required confirmations"
         );
 
-        for (uint256 i = 0; i < _owners.length; i++) {
-            address owner = _owners[i];
+        for (uint256 i = 0; i < _approvers.length; i++) {
+            address owner = _approvers[i];
 
             require(owner != address(0), "invalid owner");
             require(!isOwner[owner], "owner not unique");
@@ -57,53 +47,55 @@ contract MultiSig {
             owners.push(owner);
         }
 
-        numConfirmationsRequired = _numConfirmationsRequired;
+        targetConfirm = _targetConfirm;
     }
 
+    /// @dev this wallet should receive the ETH.
     receive() external payable {}
 
+    /// @notice submit transaction data to storage
+    /// @param _to destination addrss
+    /// @param _value amount to send
+    /// @param _data bytes data to send
     function submitTransaction(
         address _to,
         uint256 _value,
         bytes memory _data
-    ) public onlyOwner {
-        uint256 txIndex = transactions.length;
-
-        transactions.push(
+    ) public {
+        require(isOwner[msg.sender], "only owner can call this function.");
+        txInfo.push(
             Transaction({
                 to: _to,
                 value: _value,
                 data: _data,
                 executed: false,
-                numConfirmations: 0
+                confirms: 0
             })
         );
     }
 
-    function confirmTransaction(uint256 _txIndex)
-        public
-        onlyOwner
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-        notConfirmed(_txIndex)
-    {
-        Transaction storage transaction = transactions[_txIndex];
-        transaction.numConfirmations += 1;
-        isConfirmed[_txIndex][msg.sender] = true;
+    /// @notice confirm certain transaction
+    /// @param _txIndex transaction index in txInfo to confirm
+    function confirmTx(uint256 _txIndex) public {
+        require(isOwner[msg.sender], "only owner can call this function.");
+        require(_txIndex < txInfo.length, "invalid tx");
+        require(!isApproved[_txIndex][msg.sender], "tx already confirmed");
+        require(!txInfo[_txIndex].executed, "tx already executed");
+        Transaction storage transaction = txInfo[_txIndex];
+        transaction.confirms += 1;
+        isApproved[_txIndex][msg.sender] = true;
     }
 
-    function executeTransaction(uint256 _txIndex)
-        public
-        onlyOwner
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-    {
-        Transaction storage transaction = transactions[_txIndex];
+    /// @notice execute certain transaction
+    /// @param _txIndex transaction index in txInfo to execute
+    function executeTx(uint256 _txIndex) public {
+        require(isOwner[msg.sender], "only owner can call this function.");
+        require(_txIndex < txInfo.length, "invalid tx");
+        require(!txInfo[_txIndex].executed, "tx already executed");
 
-        require(
-            transaction.numConfirmations >= numConfirmationsRequired,
-            "cannot execute tx"
-        );
+        Transaction storage transaction = txInfo[_txIndex];
+
+        require(transaction.confirms >= targetConfirm, "cannot execute tx");
 
         transaction.executed = true;
 
@@ -113,28 +105,24 @@ contract MultiSig {
         require(success, "tx failed");
     }
 
-    function revokeConfirmation(uint256 _txIndex)
-        public
-        onlyOwner
-        txExists(_txIndex)
-        notExecuted(_txIndex)
-    {
-        Transaction storage transaction = transactions[_txIndex];
+    /// @notice revoke certain transaction
+    /// @param _txIndex transaction index in txInfo to revoke
+    function revokeTx(uint256 _txIndex) public {
+        require(isOwner[msg.sender], "only owner can call this function.");
 
-        require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
+        require(_txIndex < txInfo.length, "invalid tx");
+        require(!txInfo[_txIndex].executed, "tx already executed");
 
-        transaction.numConfirmations -= 1;
-        isConfirmed[_txIndex][msg.sender] = false;
+        Transaction storage transaction = txInfo[_txIndex];
+
+        require(isApproved[_txIndex][msg.sender], "tx not confirmed");
+
+        transaction.confirms -= 1;
+        isApproved[_txIndex][msg.sender] = false;
     }
 
-    function getOwners() public view returns (address[] memory) {
-        return owners;
-    }
-
-    function getTransactionCount() public view returns (uint256) {
-        return transactions.length;
-    }
-
+    /// @notice return cetain transaction data
+    /// @param _txIndex transaction index in txInfo to return
     function getTransaction(uint256 _txIndex)
         public
         view
@@ -143,17 +131,17 @@ contract MultiSig {
             uint256 value,
             bytes memory data,
             bool executed,
-            uint256 numConfirmations
+            uint256 confirms
         )
     {
-        Transaction storage transaction = transactions[_txIndex];
+        Transaction storage txData = txInfo[_txIndex];
 
         return (
-            transaction.to,
-            transaction.value,
-            transaction.data,
-            transaction.executed,
-            transaction.numConfirmations
+            txData.to,
+            txData.value,
+            txData.data,
+            txData.executed,
+            txData.confirms
         );
     }
 }
