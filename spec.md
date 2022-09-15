@@ -220,3 +220,4 @@
     - Implement get function to calculate the txID using address, value, func calldata, bytesdata, and timestamp.
     - Owner can queue function to queue the tx or revert if the tx is out of range.
     - Owner can cancel the tx.
+    - Min Delay: 100s, Max Delay: 1000s, Lock Period: 1000

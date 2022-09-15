@@ -10,7 +10,7 @@ import { advanceTimeAndBlock, getLatestBlockTimestamp } from "../utils/util";
 const { expect } = chai;
 chai.use(solidity);
 
-describe("Etherwallet", () => {
+describe("CrowdFund", () => {
   let crowdFund: CrowdFund;
   let testToken: Erc20Mock;
   let owner: SignerWithAddress,
