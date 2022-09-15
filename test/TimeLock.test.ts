@@ -86,7 +86,9 @@ describe("TimeLock", () => {
       "0x00",
       latestTime
     );
-
+    await expect(
+      timeLock.queueTX(testToken.address, depositAmount, "0x00", latestTime)
+    ).to.be.revertedWith("already queued");
     const status = await timeLock.txStatus(txContract);
     expect(status).to.be.equal(true);
   });
